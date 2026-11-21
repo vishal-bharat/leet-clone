@@ -1,0 +1,10 @@
+node_modules
+.next
+next-env.d.ts
+*.tsbuildinfo
+.DS_Store
+public/monaco
+.env*
+!.env.example
+data/*.db
+data/*.db-*

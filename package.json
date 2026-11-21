@@ -1,0 +1,31 @@
+{
+  "name": "java-prep",
+  "version": "1.0.0",
+  "private": true,
+  "description": "A minimal, local LeetCode-style practice app for Java interview prep",
+  "scripts": {
+    "postinstall": "node scripts/copy-monaco.mjs",
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start"
+  },
+  "dependencies": {
+    "@monaco-editor/react": "^4.7.0",
+    "better-sqlite3": "^12.11.1",
+    "marked": "^15.0.12",
+    "monaco-editor": "0.55.1",
+    "next": "15.5.4",
+    "react": "19.1.0",
+    "react-dom": "19.1.0",
+    "react-resizable-panels": "^3.0.6"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "^4",
+    "@types/better-sqlite3": "^9.6.0",
+    "@types/node": "^20",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "tailwindcss": "^4",
+    "typescript": "^5"
+  }
+}
