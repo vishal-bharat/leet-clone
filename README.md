@@ -80,7 +80,8 @@ Settings (environment variables, see `.env.example`):
 |---|---|
 | `APP_PASSWORD` | Every page and API call requires signing in with this password (30-day cookie). |
 | `API_TOKEN` | Lets scripts call the API with `Authorization: Bearer <token>`, no sign-in needed. |
-| `DATA_DIR` | Folder for the database file. Defaults to `data/` in the project. |
+| `CLOUDFLARE_ACCOUNT_ID`, `CLOUDFLARE_API_TOKEN`, `D1_DATABASE_ID` | Store questions in Cloudflare D1 instead of the local file (see Storage below). |
+| `DATA_DIR` | Folder for the local SQLite file. Defaults to `data/` in the project. |
 | `JAVA_SANDBOX=docker` | Runs each submission in a throwaway container: no network, read-only filesystem, 512 MB memory, 1 CPU, 256 processes, unprivileged user. The user running the app must be allowed to use Docker. Adds about a second per run. |
 
 ## REST API
@@ -128,12 +129,28 @@ Field notes:
 
 ## Storage
 
-Questions are stored in SQLite (via `better-sqlite3`), a single file with no server to run.
-It comfortably handles tens of thousands of questions.
+Questions live in a SQLite database. You can keep it in one of two places:
 
-The first time the app starts it creates `data/java-prep.db` and imports everything in `data/problems.json`.
-After that the JSON file is no longer read, so edit questions in the app or through the API.
-To start over with only the starter questions, stop the app and delete `data/java-prep.db*`.
+**Local file (default).** `data/java-prep.db`, created on first start, no setup. Handles tens of thousands of questions.
+Back it up with `sqlite3 data/java-prep.db ".backup 'backup.db'"`.
+
+**Cloudflare D1.** The app keeps running on your server and reads/writes questions in D1 through
+Cloudflare's HTTP API. Your data then lives (and is backed up) on Cloudflare, so the server holds nothing you can lose.
+
+1. Create an API token: dash.cloudflare.com, My Profile, API Tokens, Create Token, Custom token, permission **Account / D1 / Edit**.
+2. Set these in `.env.local` (or your service manager), never in git:
+   ```
+   CLOUDFLARE_ACCOUNT_ID=<your account id>
+   CLOUDFLARE_API_TOKEN=<the token>
+   D1_DATABASE_ID=8e9f0a7e-c744-4e3f-b7ae-c9e21c928c3f
+   ```
+3. Restart the app. On first start it creates the tables in D1 and copies your existing questions in
+   (from `data/java-prep.db` if it exists, otherwise from `data/problems.json`). The log says which storage it uses.
+
+Each database call is an HTTPS request to Cloudflare, so pages take a little longer (typically 50 to 200 ms per call).
+D1 keeps 30 days of point-in-time recovery (Time Travel); see `wrangler d1 time-travel`.
+
+The very first start (local or D1) imports `data/problems.json` once; after that the JSON file is no longer read.
 
 ## How it works
 
@@ -151,4 +168,3 @@ src/lib/javaTypes.ts      Java type parsing, starter code, test-case validation
 Each run writes `Solution.java` plus a generated `Main.java` into a temp folder, compiles them,
 runs all test cases in one JVM (10 s limit), and deletes the folder.
 The code runs with your user's permissions, so this is meant for local use only; don't expose it to the internet.
-# leet-clone
